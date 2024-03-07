@@ -1,1 +1,1 @@
-# test-chat-share
+# Testing version of Chat Share Application

@@ -38,6 +38,12 @@ def index():
 def register():
     return render_template('registration.html')
 
+# Define the route for the dashboard page
+@app.route('/dashboard')
+def chat_room():
+    # Your view logic here
+    return render_template('dashboard.html')
+
 
 # Function to load user data from JSON file
 def load_users():

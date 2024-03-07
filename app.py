@@ -5,7 +5,7 @@ from passlib.hash import pbkdf2_sha256
 app = Flask(__name__)
 
 # Path to the JSON file
-json_file = 'users.json'
+json_file = '/tmp/users.json'
 
 # Define the route for the index page
 @app.route('/')

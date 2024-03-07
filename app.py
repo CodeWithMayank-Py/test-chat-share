@@ -2,7 +2,28 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 import json, secrets
 from passlib.hash import pbkdf2_sha256
 
+# Functions to create secret key
+def generate_secret_key():
+    """
+    Generate a random 32-byte secret key.
+    Returns:
+        str: The generated secret key as a hexadecimal string.
+    """
+    secret_key_bytes = secrets.token_bytes(32)
+    return secret_key_bytes.hex()
+
+# Function to hash a password
+def hash_password(password):
+    return pbkdf2_sha256.hash(password)
+
+# Functions to verify a password
+def verify_password(password, hashed_password):
+    return pbkdf2_sha256.verify(password, hashed_password)
+
+
+
 app = Flask(__name__)
+app.secret_key = generate_secret_key()
 
 # Path to the JSON file
 json_file = '/tmp/users.json'
@@ -16,26 +37,6 @@ def index():
 @app.route('/register')
 def register():
     return render_template('registration.html')
-
-
-# Function to hash a password
-def hash_password(password):
-    return pbkdf2_sha256.hash(password)
-
-# Functions to verify a password
-def verify_password(password, hashed_password):
-    return pbkdf2_sha256.verify(password, hashed_password)
-
-
-# Functions to create secret key
-def generate_secret_key():
-    """
-    Generate a random 32-byte secret key.
-    Returns:
-        str: The generated secret key as a hexadecimal string.
-    """
-    secret_key_bytes = secrets.token_bytes(32)
-    return secret_key_bytes.hex()
 
 
 # Function to load user data from JSON file

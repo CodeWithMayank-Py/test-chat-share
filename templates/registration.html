@@ -10,7 +10,7 @@
   <section>
     <div class="container">
       <div class="user signinBx">
-        <div class="imgBx"><img src="/static/images/signin.jpeg" alt="Sign In Image" /></div>
+        <div class="imgBx"><img src="{{ url_for('static', filename='images/signin.jpeg) }}" alt="Sign Up Image" /></div>
         <div class="formBx">
           <form action="/signin" method="post">
             <h2>Sign In</h2>
@@ -43,7 +43,7 @@
             </p>
           </form>
         </div>
-        <div class="imgBx"><img src="/static/images/signup.jpeg" alt="Sign Up Image" /></div>
+        <div class="imgBx"><img src="{{ url_for('static', filename='images/signup.jpeg') }}" alt="Sign Up Image" /></div>
       </div>
     </div>
   </section>

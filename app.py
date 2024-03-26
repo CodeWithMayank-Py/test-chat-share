@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, session
 from flask_socketio import join_room, leave_room, send, SocketIO
+from flask_session import Session
 import json, secrets,random
 from passlib.hash import pbkdf2_sha256
 from string import ascii_uppercase
@@ -34,7 +35,9 @@ def generate_unique_code(length):
 
 
 app = Flask(__name__)
-app.config["SECRET_KEY"] = "hjhjsdaaads"
+app.secret_key = secrets.token_urlsafe(32)
+app.config['SESSION_TYPE'] = 'filesystem'  # Use filesystem for storing session data
+Session(app)
 socketio = SocketIO(app)
 
 # Path to the JSON file

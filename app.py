@@ -156,7 +156,7 @@ def dashboard():
 def room():
     room = session.get("room")
     if room is None or session.get("name") is None or room not in rooms:
-        return redirect(url_for("home"))
+        return redirect(url_for("dashboard"))
 
     return render_template("room.html", code=room, messages=rooms[room]["messages"])
 
@@ -205,7 +205,7 @@ def disconnect():
     print(f"{name} has left the room {room}")
 
 
-@app.route('/demo')
+@app.route('/exit')
 def exit_room():
     return render_template('index.html')
 

@@ -206,7 +206,7 @@ def disconnect():
 
 
 @app.route('/demo')
-def exit():
+def exit_room():
     return render_template('index.html')
 
 if __name__ == '__main__':

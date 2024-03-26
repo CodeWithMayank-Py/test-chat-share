@@ -4,6 +4,9 @@ from flask_session import Session
 import json, secrets,random
 from passlib.hash import pbkdf2_sha256
 from string import ascii_uppercase
+from flask import jsonify
+import jwt
+from datetime import datetime, timedelta
 
 # Functions to create secret key
 def generate_secret_key():
@@ -66,6 +69,16 @@ def save_users(users_data):
         json.dump(users_data, f, indent=4)
 
 
+# Function to generate JWT token
+def generate_jwt_token(user_id, username):
+    payload = {
+        'user_id': user_id,
+        'username': username,
+        'exp': datetime.utcnow() + timedelta(hours=1)  # Token expiration time (e.g., 1 hour)
+    }
+    token = jwt.encode(payload, app.config['SECRET_KEY'], algorithm='HS256')
+    return token
+
 # Route for handling user registration
 @app.route('/signup', methods=['POST'])
 def signup():
@@ -91,11 +104,11 @@ def signup():
         # Save updated user data to JSON file
         save_users(users_data)
 
-        flash('Registration successful. Please log in.', 'success')
-        return redirect(url_for('dashboard'))  # Redirect to the dashboard page after successful registration
+        # Generate JWT token for the newly registered user
+        token = generate_jwt_token(email, name)
 
-    # Render the signup page template (if the request method is not POST)
-    return render_template('registration.html')
+        # Return JWT token as JSON response
+        return jsonify({'token': token.decode('utf-8')})
 
 # Route for handling user sign-in
 @app.route('/signin', methods=['POST'])
@@ -112,15 +125,15 @@ def signin():
             # Verify the password
             stored_password = users_data[email]['password']
             if verify_password(password, stored_password):
-                flash('Login successful.', 'success')
-                return redirect(url_for('dashboard'))  # Redirect to the dashboard page
+                # Generate JWT token for the authenticated user
+                token = generate_jwt_token(email, users_data[email]['name'])
+                
+                # Return JWT token as JSON response
+                return jsonify({'token': token.decode('utf-8')})
             else:
-                flash('Invalid email or password. Please try again.', 'error')
+                return jsonify({'error': 'Invalid email or password'}), 401  # Unauthorized
         else:
-            flash('User does not exist. Please sign up.', 'error')
-
-    # Render the signin page template (if the request method is not POST or authentication fails)
-    return redirect(url_for('register'))
+            return jsonify({'error': 'User does not exist'}), 404  # Not Found
 
 
 # Define the route for the dashboard page

@@ -34,7 +34,7 @@ def generate_unique_code(length):
 
 
 app = Flask(__name__)
-app.secret_key = generate_secret_key()
+app.config["SECRET_KEY"] = "hjhjsdaaads"
 socketio = SocketIO(app)
 
 # Path to the JSON file

@@ -1,6 +1,8 @@
-from flask import Flask, render_template, request, redirect, url_for, flash
-import json, secrets
+from flask import Flask, render_template, request, redirect, url_for, flash, session
+from flask_socketio import join_room, leave_room, send, SocketIO
+import json, secrets,random
 from passlib.hash import pbkdf2_sha256
+from string import ascii_uppercase
 
 # Functions to create secret key
 def generate_secret_key():
@@ -20,13 +22,24 @@ def hash_password(password):
 def verify_password(password, hashed_password):
     return pbkdf2_sha256.verify(password, hashed_password)
 
+def generate_unique_code(length):
+    while True:
+        code = ""
+        for _ in range(length):
+            code += random.choice(ascii_uppercase)
+        
+        if code not in rooms:
+            break
+    return code
 
 
 app = Flask(__name__)
 app.secret_key = generate_secret_key()
+socketio = SocketIO(app)
 
 # Path to the JSON file
 json_file = '/tmp/users.json'
+rooms = {}
 
 # Define the route for the index page
 @app.route('/')
@@ -37,13 +50,6 @@ def index():
 @app.route('/register')
 def register():
     return render_template('registration.html')
-
-# Define the route for the dashboard page
-@app.route('/dashboard')
-def chat_room():
-    # Your view logic here
-    return render_template('dashboard.html')
-
 
 # Function to load user data from JSON file
 def load_users():
@@ -115,6 +121,93 @@ def signin():
     # Render the signin page template (if the request method is not POST or authentication fails)
     return redirect(url_for('register'))
 
+
+# Define the route for the dashboard page
+@app.route('/dashboard', methods=["POST", "GET"])
+def dashboard():
+    session.clear()
+    if request.method == "POST":
+        name = request.form.get("name")
+        code = request.form.get("code")
+        join = request.form.get("join", False)
+        create = request.form.get("create", False)
+
+        if not name:
+            return render_template("home.html", error="Please enter a name.", code=code, name=name)
+
+        if join != False and not code:
+            return render_template("home.html", error="Please enter a room code.", code=code, name=name)
+        
+        room = code
+        if create != False:
+            room = generate_unique_code(4)
+            rooms[room] = {"members": 0, "messages": []}
+        elif code not in rooms:
+            return render_template("home.html", error="Room does not exist.", code=code, name=name)
+        
+        session["room"] = room
+        session["name"] = name
+        return redirect(url_for("room"))
+
+    return render_template("home.html")
+
+
+@app.route("/room")
+def room():
+    room = session.get("room")
+    if room is None or session.get("name") is None or room not in rooms:
+        return redirect(url_for("home"))
+
+    return render_template("room.html", code=room, messages=rooms[room]["messages"])
+
+
+@socketio.on("message")
+def message(data):
+    room = session.get("room")
+    if room not in rooms:
+        return 
+    
+    content = {
+        "name": session.get("name"),
+        "message": data["data"]
+    }
+    send(content, to=room)
+    rooms[room]["messages"].append(content)
+    print(f"{session.get('name')} said: {data['data']}")
+
+@socketio.on("connect")
+def connect(auth):
+    room = session.get("room")
+    name = session.get("name")
+    if not room or not name:
+        return
+    if room not in rooms:
+        leave_room(room)
+        return
+    
+    join_room(room)
+    send({"name": name, "message": "has entered the room"}, to=room)
+    rooms[room]["members"] += 1
+    print(f"{name} joined room {room}")
+
+@socketio.on("disconnect")
+def disconnect():
+    room = session.get("room")
+    name = session.get("name")
+    leave_room(room)
+
+    if room in rooms:
+        rooms[room]["members"] -= 1
+        if rooms[room]["members"] <= 0:
+            del rooms[room]
+    
+    send({"name": name, "message": "has left the room"}, to=room)
+    print(f"{name} has left the room {room}")
+
+
+@app.route('/demo')
+def exit():
+    return render_template('index.html')
 
 if __name__ == '__main__':
     app.run(debug=True) 

@@ -35,9 +35,7 @@ def generate_unique_code(length):
 
 
 app = Flask(__name__)
-app.secret_key = secrets.token_urlsafe(32)
-app.config['SESSION_TYPE'] = 'filesystem'  # Use filesystem for storing session data
-Session(app)
+app.config["SECRET_KEY"] = "hjhjsdaaads"
 socketio = SocketIO(app)
 
 # Path to the JSON file

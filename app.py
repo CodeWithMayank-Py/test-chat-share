@@ -91,7 +91,7 @@ def signup():
         save_users(users_data)
 
         flash('Registration successful. Please log in.', 'success')
-        return redirect(url_for('chat_room'))  # Redirect to the dashboard page after successful registration
+        return redirect(url_for('dashboard'))  # Redirect to the dashboard page after successful registration
 
     # Render the signup page template (if the request method is not POST)
     return render_template('registration.html')
@@ -112,7 +112,7 @@ def signin():
             stored_password = users_data[email]['password']
             if verify_password(password, stored_password):
                 flash('Login successful.', 'success')
-                return redirect(url_for('chat_room'))  # Redirect to the dashboard page
+                return redirect(url_for('dashboard'))  # Redirect to the dashboard page
             else:
                 flash('Invalid email or password. Please try again.', 'error')
         else:
@@ -133,23 +133,23 @@ def dashboard():
         create = request.form.get("create", False)
 
         if not name:
-            return render_template("home.html", error="Please enter a name.", code=code, name=name)
+            return render_template("dashboard.html", error="Please enter a name.", code=code, name=name)
 
         if join != False and not code:
-            return render_template("home.html", error="Please enter a room code.", code=code, name=name)
+            return render_template("dashboard.html", error="Please enter a room code.", code=code, name=name)
         
         room = code
         if create != False:
             room = generate_unique_code(4)
             rooms[room] = {"members": 0, "messages": []}
         elif code not in rooms:
-            return render_template("home.html", error="Room does not exist.", code=code, name=name)
+            return render_template("dashboard.html", error="Room does not exist.", code=code, name=name)
         
         session["room"] = room
         session["name"] = name
         return redirect(url_for("room"))
 
-    return render_template("home.html")
+    return render_template("dashboard.html")
 
 
 @app.route("/room")
